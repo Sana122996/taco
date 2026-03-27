@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>特朗普TACO指数 Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#735c00",
+              "on-primary": "#ffffff",
+              "primary-container": "#d4af37",
+              "on-primary-container": "#554300",
+              "surface": "#fbf9f5",
+              "on-surface": "#1b1c1a",
+              "surface-variant": "#e4e2de",
+              "on-surface-variant": "#4d4635",
+              "outline-variant": "#d0c5af",
+              "tertiary": "#415ba4",
+              "tertiary-fixed": "#dbe1ff",
+              "on-tertiary-fixed-variant": "#27438a",
+              "error": "#ba1a1a",
+              "error-container": "#ffdad6",
+              "on-error-container": "#93000a",
+              "financial-up": "#ba1a1a", // Red for up
+              "financial-down": "#008148", // Green for down
+              "risk-high": "#8B0000",
+              "risk-mid-high": "#FF8C00",
+              "risk-mid": "#D4AF37",
+              "risk-low": "#0000FF",
+            },
+            fontFamily: {
+              "serif-title": ["'Noto Serif SC'", "serif"],
+              "body": ["'PingFang SC'", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'PingFang SC', sans-serif; -webkit-font-smoothing: antialiased; }
+        .serif-heavy { font-family: 'Noto Serif SC', serif; font-weight: 900; }
+        .taco-shell {
+            width: 50px;
+            height: 25px;
+            background: #d4af37;
+            border-radius: 50px 50px 0 0;
+            position: relative;
+            transform: rotate(-15deg);
+        }
+        .taco-filling {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            height: 8px;
+            background: linear-gradient(90deg, #ba1a1a 30%, #415ba4 30% 60%, #735c00 60%);
+            border-radius: 4px;
+        }
+        .definition-modal {
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+        .definition-modal.active {
+            display: flex;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -17px;
+            top: 6px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #d4af37;
+            z-index: 10;
+        }
+        .timeline-container::after {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            bottom: 0;
+            width: 1px;
+            background: #d0c5af;
+        }
+        .event-tooltip {
+            position: absolute;
+            background: #ba1a1a;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 50;
+            display: none;
+            transform: translate(-50%, -100%);
+            margin-top: -8px;
+        }
+        .event-trigger.active .event-tooltip {
+            display: block;
+        }
+        .event-trigger {
+            cursor: pointer;
+        }
+        .axis-label {
+            font-size: 9px;
+            fill: #4d4635;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- Header Section -->
+<header class="pt-16 pb-10 px-5 space-y-2">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-[10px] text-primary/60 font-bold tracking-[0.2em] mb-1">金十数据VIP</span>
+<div class="flex items-center gap-2">
+<h1 class="serif-heavy text-3xl text-primary tracking-tight whitespace-nowrap">特朗普TACO指数</h1>
+<button class="material-symbols-outlined text-primary/60 text-xl align-middle" onclick="toggleModal()">help</button>
+</div>
+</div>
+<div class="relative mt-2">
+<div class="taco-shell shadow-lg border-2 border-primary/20">
+<div class="taco-filling"></div>
+</div>
+</div>
+</div>
+</header>
+<!-- Definition Modal -->
+<div class="definition-modal fixed inset-0 z-[100] items-center justify-center p-6 bg-black/40" id="defModal" onclick="toggleModal()">
+<div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm space-y-3" onclick="event.stopPropagation()">
+<h4 class="font-bold text-lg text-primary">什么是 TACO 指数？</h4>
+<p class="text-sm leading-relaxed text-on-surface-variant">
+            "TACO"是"Trump Always Chickens Out"（特朗普总是退缩）的缩写，最初源于去年特朗普在关税政策上的多次急转弯。金十数据编制的特朗普TACO指数，用六个市场与宏观因子观察特朗普政策转向风险。指数越高，越要警惕政策口风变化、风险资产波动和短线交易节奏切换。
+        </p>
+<button class="w-full py-2 bg-primary text-white rounded-lg font-bold" onclick="toggleModal()">了解</button>
+</div>
+</div>
+<main class="px-5 pb-12 space-y-8">
+<!-- Hero: Index Status -->
+<section class="bg-primary-container/10 p-5 rounded-2xl border border-primary-container/20">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+<div class="flex-shrink-0 flex items-center gap-4">
+<div>
+<span class="text-[10px] font-bold text-primary tracking-widest uppercase block mb-1">实时TACO指数</span>
+<div class="flex items-baseline gap-2">
+<h2 class="text-6xl font-black text-on-surface tracking-tighter" id="heroIndex">+1.04</h2>
+<span class="text-sm font-bold text-financial-up" id="heroChange">+0.05%</span>
+</div>
+</div>
+<div class="bg-error text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-sm whitespace-nowrap overflow-hidden" id="statusBadge">
+<div class="w-1.5 h-1.5 bg-white rounded-full animate-pulse flex-shrink-0"></div>
+<span class="text-[11px] font-bold text-white uppercase tracking-wide" id="heroStatus">施压区 / 进入高级观察</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-4 pt-5 border-t border-primary/10">
+<div class="flex items-start gap-5">
+<div class="space-y-0.5 min-w-[70px]">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase">政策风险</p>
+<p class="font-black text-2xl" id="riskLevel">中高</p>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">今日深度解读</span>
+</div>
+<p class="text-[12px] leading-relaxed text-on-surface/80" id="miniSummary">当前指数为 +1.04，处于“施压区 / 进入高级观察”。主导压力来自反向SPX、10Y美债。由于指数处于中高风险区，市场更容易交易口风变化，建议警惕风险资产波动。</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Performance History -->
+<section class="space-y-3">
+<div class="flex justify-between items-center">
+<h3 class="font-bold text-lg text-on-surface">TACO与VIX历史走势</h3>
+<span class="text-[10px] text-on-surface-variant font-bold">TACO INDEX vs VIX</span>
+</div>
+<div class="bg-white p-2 pt-4 rounded-2xl shadow-sm border border-outline-variant/10 aspect-[4/3] flex flex-col relative overflow-hidden">
+<div class="flex-1 w-full relative" id="chartContainer">
+<svg class="w-full h-full" id="lineChart" preserveaspectratio="xMidYMid meet" viewbox="0 0 760 430"></svg>
+</div>
+<div class="flex gap-4 mt-2 px-3 pb-2 border-t border-outline-variant/10 pt-2">
+<div class="flex items-center gap-1.5">
+<div class="w-3 h-1 bg-on-surface rounded-full"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">TACO</span>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="w-3 h-1 bg-tertiary rounded-full"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">VIX</span>
+</div>
+<div class="ml-auto">
+<span class="text-[9px] text-on-surface-variant/60 font-medium italic">点击虚线查看事件</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Factor Breakdown -->
+<section class="space-y-4">
+<h3 class="font-bold text-lg text-on-surface">因子拆解</h3>
+<div class="grid grid-cols-1 gap-3" id="factorsGrid">
+<!-- Factor cards rendered by JS -->
+</div>
+</section>
+<!-- News Feed -->
+<section class="space-y-3">
+<div class="flex justify-between items-center">
+<h3 class="font-bold text-lg text-on-surface">特朗普快讯</h3>
+<span class="material-symbols-outlined text-primary/60">rss_feed</span>
+</div>
+<div class="relative pl-6 timeline-container">
+<div class="space-y-6" id="newsList"></div>
+</div>
+<button class="w-full py-3 text-xs font-bold text-primary border border-outline-variant/30 rounded-xl hover:bg-primary/5 transition-colors mt-2" id="showMoreBtn" onclick="toggleNews()">查看更多快讯</button>
+</section>
+</main>
+<script>
+    function toggleModal() {
+        const modal = document.getElementById('defModal');
+        modal.classList.toggle('active');
+    }
+
+    const FACTORS = [
+        { 
+            key: "spxInverse", 
+            label: "标普500反向1个月收益", 
+            short: "反向SPX", 
+            description: "市场越跌，该因子通常越抬升总统政策压力。", 
+            productReason: "特朗普对股市反馈高度敏感，股市急跌常更快触发口风变化。",
+            source: "行情源 / FRED SP500", 
+            freq: "日频 / 分钟",
+            icon: "trending_down",
+            unit: "",
+            multiplier: 1.15,
+            rawZ: 1.53,
+            triggerLabel: "压力显现：3%-6%"
+        },
+        { 
+            key: "us10y", 
+            label: "美国10年期国债收益率变动", 
+            short: "10Y美债", 
+            description: "长端利率快速上行通常意味着融资环境收紧。", 
+            productReason: "10Y 是金融条件核心压力阀，且存在明显阈值效应。",
+            source: "FRED DGS10", 
+            freq: "日频",
+            icon: "account_balance",
+            unit: "bp",
+            multiplier: 1.15,
+            rawZ: 1.2,
+            triggerLabel: "观察区：4.3%-4.5%"
+        },
+        { 
+            key: "mortgage30y", 
+            label: "30年按揭利率变动", 
+            short: "按揭利率", 
+            description: "房贷利率上行会放大居民端压力与政治敏感度。", 
+            productReason: "居民融资体感强，但更新较慢，且部分影响已被10Y吸收。",
+            source: "FRED MORTGAGE30US", 
+            freq: "周频",
+            icon: "home",
+            unit: "bp",
+            multiplier: 1.0,
+            rawZ: 0.45,
+            triggerLabel: "线性处理"
+        },
+        { 
+            key: "gasoline", 
+            label: "美国汽油价格1个月变动", 
+            short: "汽油", 
+            description: "油价飙升会迅速传导到通胀感受与舆论压力。", 
+            productReason: "居民体感最强的价格变量之一，对舆论与政治压力传导直接。",
+            source: "FRED GASREGW", 
+            freq: "周频",
+            icon: "local_gas_station",
+            unit: "%",
+            multiplier: 1.1,
+            rawZ: 1.16,
+            triggerLabel: "体感升温：4%-8%"
+        },
+        { 
+            key: "cpiSwap1y", 
+            label: "1年通胀预期变动", 
+            short: "通胀预期", 
+            description: "市场对未来一年通胀预期抬升，通常压制政策空间。", 
+            productReason: "通胀预期决定政策空间，对关税与地缘冲击尤其敏感。",
+            source: "FRED EXPINF1YR（首版代理）", 
+            freq: "月频",
+            icon: "speed",
+            unit: "bp",
+            multiplier: 1.15,
+            rawZ: 0.51,
+            triggerLabel: "预期抬升：20-40bp"
+        },
+        { 
+            key: "approval", 
+            label: "总统支持率变动", 
+            short: "支持率", 
+            description: "支持率走弱通常意味着政策回撤阈值更低。", 
+            productReason: "支持率重要，但更偏慢变量与结果变量，不宜压过市场变量。",
+            source: "NYT Poll Average", 
+            freq: "周频",
+            inverse: true, 
+            icon: "group",
+            unit: "%",
+            multiplier: 1.0,
+            rawZ: 0.3,
+            triggerLabel: "线性处理"
+        }
+    ];
+
+    const INITIAL_VALUES = { spxInverse: 4.6, us10y: 42, mortgage30y: 18, gasoline: 5.8, cpiSwap1y: 28, approval: -1.2 };
+    
+    const EVENTS = [
+        { date: "04-02", title: "90天关税暂停", xPercent: 0.15 },
+        { date: "08-01", title: "联储理事库克罢免", xPercent: 0.35 },
+        { date: "09-01", title: "政府停摆开始", xPercent: 0.45 },
+        { date: "12-12", title: "再度施压美联储", xPercent: 0.65 },
+        { date: "02-10", title: "美以袭击伊朗", xPercent: 0.85 }
+    ];
+
+    const NEWS_FEED = [
+        { id: "1", time: "10:28", headline: "特朗普称将重新评估部分对外施压节奏", summary: "若市场压力继续抬升，这类表态可作为政策语气边际软化的早期信号。", tone: "dovish", tag: "政策口风" },
+        { id: "2", time: "09:41", headline: "特朗普再度强调通胀与能源价格不可失控", summary: "说明能源与居民体感仍是核心关注点，汽油与通胀预期因子的重要性上升。", tone: "mixed", tag: "通胀表态" },
+        { id: "3", time: "08:55", headline: "顾问团队释放继续强硬施压的信号", summary: "若同时伴随股市承压有限、长端利率稳定，则强硬叙事更容易延续。", tone: "hawkish", tag: "政策路径" },
+        { id: "4", time: "昨日", headline: "关税政策博弈进入白热化阶段", summary: "白宫内部消息人士称，贸易顾问与财政官员在关税执行力度上仍存分歧。", tone: "mixed", tag: "贸易动态" }
+    ];
+
+    let state = { 
+        values: { ...INITIAL_VALUES }, 
+        showAllNews: false
+    };
+
+    function formatSigned(num, digits = 2) { return `${num > 0 ? "+" : ""}${Number(num).toFixed(digits)}`; }
+    
+    function getFinancialColor(val) {
+        return val >= 0 ? 'text-financial-up' : 'text-financial-down';
+    }
+
+    function calculateTacoIndex(values) {
+        const weights = { spxInverse: 1.3, us10y: 1.35, mortgage30y: 0.85, gasoline: 1.1, cpiSwap1y: 1.2, approval: 0.8 };
+        const stds = { spxInverse: 3, us10y: 35, mortgage30y: 40, gasoline: 5, cpiSwap1y: 55, approval: 4 };
+        
+        const contributions = FACTORS.map(f => {
+            const raw = values[f.key] / stds[f.key];
+            const contribution = (f.inverse ? -raw : raw) * weights[f.key] * f.multiplier;
+            return { ...f, value: values[f.key], contribution };
+        });
+        
+        const totalW = Object.values(weights).reduce((s, w) => s + w, 0);
+        const normalized = contributions.reduce((s, i) => s + i.contribution, 0) / totalW;
+        return { normalized, contributions };
+    }
+
+    function getRiskConfig(idx) {
+        if (idx >= 0.8) return { label: "高", class: "text-risk-high" };
+        if (idx >= 0.5) return { label: "中高", class: "text-risk-mid-high" };
+        if (idx > -0.3) return { label: "中", class: "text-risk-mid" };
+        return { label: "低", class: "text-risk-low" };
+    }
+
+    function getStatusConfig(idx) {
+        if (idx >= 0.5) return ["施压区 / 进入高级观察", "bg-error text-white"];
+        if (idx > -0.3) return ["中性区", "bg-tertiary-fixed text-on-tertiary-fixed-variant"];
+        return ["低压区 / 强硬窗口", "bg-financial-down/10 text-financial-down"];
+    }
+
+    function toggleNews() {
+        state.showAllNews = !state.showAllNews;
+        const btn = document.getElementById('showMoreBtn');
+        btn.textContent = state.showAllNews ? '收起快讯' : '查看更多快讯';
+        renderNews();
+    }
+
+    function renderFactors(conts) {
+        document.getElementById("factorsGrid").innerHTML = conts.map(f => `
+            <div class="bg-primary-container/5 px-4 py-5 rounded-xl border border-outline-variant/10 flex flex-col gap-4">
+                <div class="flex items-center gap-2 border-b border-primary/5 pb-2">
+                    <span class="material-symbols-outlined text-primary text-xl opacity-80">${f.icon}</span>
+                    <h4 class="text-xs text-on-surface font-black uppercase tracking-tight truncate">${f.label}</h4>
+                </div>
+                
+                <div class="flex justify-between items-start gap-2">
+                    <div class="flex-1">
+                        <p class="text-[9px] text-on-surface-variant font-bold uppercase mb-0.5 whitespace-nowrap">当前值</p>
+                        <p class="text-[13px] font-black text-on-surface">${f.value}${f.unit}</p>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[9px] text-on-surface-variant font-bold uppercase mb-0.5 whitespace-nowrap">Raw Z</p>
+                        <p class="text-[13px] font-black ${getFinancialColor(f.rawZ)}">${formatSigned(f.rawZ, 2)}</p>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[9px] text-on-surface-variant font-bold uppercase mb-0.5 whitespace-nowrap">放大倍数</p>
+                        <p class="text-[13px] font-black text-on-surface">x${f.multiplier.toFixed(2)}</p>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[9px] text-on-surface-variant font-bold uppercase mb-0.5 whitespace-nowrap">贡献值</p>
+                        <p class="text-[13px] font-black ${getFinancialColor(f.contribution)}">${formatSigned(f.contribution, 2)}</p>
+                    </div>
+                </div>
+
+                <div class="bg-primary/5 p-2 rounded-lg">
+                    <p class="text-[10px] text-on-surface-variant leading-relaxed">
+                        <span class="font-bold text-primary">因子说明:</span> ${f.triggerLabel}
+                    </p>
+                </div>
+
+                <div class="pt-1">
+                    <p class="text-[10px] text-on-surface-variant leading-tight opacity-75">${f.description} ${f.productReason}</p>
+                    <div class="flex flex-wrap gap-x-3 gap-y-1 mt-2 opacity-60">
+                         <div class="text-[8px] font-bold text-primary uppercase">源: ${f.source}</div>
+                         <div class="text-[8px] font-bold text-primary uppercase">频率: ${f.freq}</div>
+                    </div>
+                </div>
+            </div>
+        `).join("");
+    }
+
+    function renderNews() {
+        const visibleNews = state.showAllNews ? NEWS_FEED : NEWS_FEED.slice(0, 2);
+        document.getElementById("newsList").innerHTML = visibleNews.map(n => {
+            let toneTag = 'bg-on-surface/5 text-on-surface-variant';
+            let toneLabel = '中性';
+            if(n.tone === 'dovish') {
+                toneTag = 'bg-financial-up/10 text-financial-up';
+                toneLabel = '利多';
+            } else if(n.tone === 'hawkish') {
+                toneTag = 'bg-financial-down/10 text-financial-down';
+                toneLabel = '利空';
+            }
+            return `
+            <div class="relative timeline-item pl-1">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] text-on-surface-variant font-bold">${n.time} · ${n.tag}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-sm font-bold ${toneTag}">${toneLabel}</span>
+                </div>
+                <h4 class="text-[13px] font-bold text-on-surface leading-snug">${n.headline}</h4>
+                <p class="text-[11px] text-on-surface-variant leading-relaxed mt-1">${n.summary}</p>
+            </div>
+        `}).join("");
+    }
+
+    function drawLineChart(svgId, history) {
+        const svg = document.getElementById(svgId);
+        const width = 760, height = 430;
+        const margin = { top: 40, right: 50, bottom: 40, left: 50 };
+        const innerW = width - margin.left - margin.right;
+        const innerH = height - margin.top - margin.bottom;
+
+        const x = (i) => margin.left + (innerW * i) / (history.length - 1);
+        const yT = (v) => margin.top + ((1.5 - v) / 3) * innerH; 
+        const yV = (v) => margin.top + ((40 - v) / 30) * innerH;
+
+        let h = `<rect x="${margin.left}" y="${margin.top}" width="${innerW}" height="${innerH}" fill="#fcfbf8" rx="8" />`;
+        [0.5, 1, 1.5, 2, 2.5].forEach(v => {
+             const py = margin.top + (innerH * (v-0.5)/2);
+             h += `<line x1="${margin.left}" y1="${py}" x2="${width - margin.right}" y2="${py}" stroke="#e4e2de" stroke-width="1" />`;
+        });
+
+        const dates = ["2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04"];
+        dates.forEach((d, i) => {
+            const px = margin.left + (innerW * i) / (dates.length - 1);
+            h += `<text x="${px}" y="${height - 15}" text-anchor="middle" class="axis-label">${d}</text>`;
+        });
+
+        [-1, 0, 1].forEach(tick => {
+            h += `<text x="${margin.left - 10}" y="${yT(tick) + 4}" text-anchor="end" class="axis-label">${tick > 0 ? '+' : ''}${tick}</text>`;
+        });
+        h += `<text x="${margin.left - 10}" y="${margin.top - 10}" text-anchor="end" class="axis-label" style="fill:#1b1c1a">TACO</text>`;
+
+        [15, 25, 35].forEach(tick => {
+            h += `<text x="${width - margin.right + 10}" y="${yV(tick) + 4}" text-anchor="start" class="axis-label">${tick}</text>`;
+        });
+        h += `<text x="${width - margin.right + 10}" y="${margin.top - 10}" text-anchor="start" class="axis-label" style="fill:#415ba4">VIX</text>`;
+
+        EVENTS.forEach(ev => {
+            const posX = margin.left + (innerW * ev.xPercent);
+            h += `
+            <g class="event-trigger" onclick="this.classList.toggle('active')">
+                <line x1="${posX}" y1="${margin.top}" x2="${posX}" y2="${height - margin.bottom}" stroke="#ba1a1a" stroke-dasharray="4,4" stroke-width="2" opacity="0.4" />
+                <rect x="${posX - 10}" y="${margin.top}" width="20" height="${innerH}" fill="transparent" />
+                <foreignObject x="${posX}" y="${margin.top - 25}" width="100" height="30" style="overflow: visible;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" class="event-tooltip">${ev.title}<br/><small style="opacity:0.7">${ev.date}</small></div>
+                </foreignObject>
+            </g>`;
+        });
+
+        let tP = "", vP = "";
+        history.forEach((it, i) => {
+            tP += `${i === 0 ? "M" : "L"}${x(i)},${yT(it.taco)} `;
+            vP += `${i === 0 ? "M" : "L"}${x(i)},${yV(it.vix)} `;
+        });
+        
+        h += `<path d="${tP}" fill="none" stroke="#1b1c1a" stroke-width="4" stroke-linecap="round"/>`;
+        h += `<path d="${vP}" fill="none" stroke="#415ba4" stroke-width="3" stroke-dasharray="5,5"/>`;
+        svg.innerHTML = h;
+    }
+
+    function render() {
+        const res = calculateTacoIndex(state.values);
+        const risk = getRiskConfig(res.normalized);
+        const status = getStatusConfig(res.normalized);
+        const history = [
+            {taco: 0.1, vix: 14}, {taco: 0.3, vix: 16}, {taco: 0.15, vix: 15}, 
+            {taco: 0.4, vix: 18}, {taco: 0.5, vix: 17}, {taco: 0.45, vix: 19},
+            {taco: 0.8, vix: 22}, {taco: 1.04, vix: 21}
+        ];
+
+        document.getElementById("heroIndex").textContent = formatSigned(res.normalized, 2);
+        document.getElementById("heroStatus").textContent = status[0];
+        
+        const riskEl = document.getElementById("riskLevel");
+        riskEl.textContent = risk.label;
+        riskEl.className = `font-black text-2xl ${risk.class}`;
+        
+        const badge = document.getElementById("statusBadge");
+        badge.className = `${status[1]} px-4 py-2 rounded-full flex items-center gap-2 shadow-sm whitespace-nowrap overflow-hidden`;
+
+        const heroChange = document.getElementById("heroChange");
+        const changeVal = 0.05;
+        heroChange.textContent = formatSigned(changeVal, 2) + "%";
+        heroChange.className = `text-sm font-bold ${getFinancialColor(changeVal)}`;
+
+        const summary = `当前指数为 ${formatSigned(res.normalized, 2)}，处于“${status[0]}”。主导压力来自反向SPX、10Y美债。由于指数处于${risk.label}风险区，${res.normalized >= 0.5 ? '市场更容易交易口风变化，建议警惕风险资产波动。' : '政策叙事更具韧性，强硬窗口可能延续。'}`;
+        document.getElementById("miniSummary").textContent = summary;
+        
+        renderFactors(res.contributions);
+        renderNews();
+        drawLineChart("lineChart", history);
+    }
+
+    render();
+</script>
+</body></html>
