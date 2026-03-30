@@ -140,10 +140,10 @@
                 const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 circle.setAttribute("cx", x);
                 circle.setAttribute("cy", yt);
-                circle.setAttribute("r", "12");
+                circle.setAttribute("r", "14");
                 circle.setAttribute("fill", "#E14D57");
                 circle.setAttribute("stroke", "#fff");
-                circle.setAttribute("stroke-width", "3");
+                circle.setAttribute("stroke-width", "4");
                 circle.setAttribute("class", "chart-dot");
                 circle.onclick = (e) => {
                     e.stopPropagation();
@@ -154,23 +154,27 @@
                     tooltip.style.display = 'block';
                     
                     const wrapperWidth = chartWrapper.offsetWidth;
-                    const wrapperHeight = chartWrapper.offsetHeight;
                     const posX = (x / 800) * wrapperWidth;
-                    const posY = (yt / 450) * wrapperHeight;
+                    const posY = (yt / 450) * chartWrapper.offsetHeight;
 
                     tooltip.style.left = posX + 'px';
                     tooltip.style.top = (posY - 15) + 'px';
                     tooltip.style.transform = 'translate(-50%, -100%)';
 
+                    // Enhanced containment logic
                     const rect = tooltip.getBoundingClientRect();
                     const containerRect = chartWrapper.getBoundingClientRect();
                     
-                    if (rect.left < containerRect.left) {
+                    if (rect.left < containerRect.left + 10) {
                         tooltip.style.transform = 'translate(0, -100%)';
                         tooltip.style.left = '10px';
-                    } else if (rect.right > containerRect.right) {
+                        tooltip.classList.add('no-arrow');
+                    } else if (rect.right > containerRect.right - 10) {
                         tooltip.style.transform = 'translate(-100%, -100%)';
                         tooltip.style.left = (wrapperWidth - 10) + 'px';
+                        tooltip.classList.add('no-arrow');
+                    } else {
+                        tooltip.classList.remove('no-arrow');
                     }
                 };
                 dotGroup.appendChild(circle);
@@ -319,6 +323,8 @@
             box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+    
+        .chart-tooltip.no-arrow::after { display: none; }
     </style>
 </head>
 <body class="bg-surface text-on-surface">
@@ -343,18 +349,17 @@
 <!-- Hero: Index Status -->
 <section class="bg-surface-variant p-6 rounded-3xl border border-outline-variant shadow-sm space-y-6">
 <div class="w-full">
-<div class="flex items-center justify-between w-full mb-5">
-<span class="text-[17px] font-black text-on-surface tracking-wide" style="">实时TACO指数</span>
-<div class="flex items-center gap-2">
-<span class="font-bold text-[38px] text-on-surface tracking-tighter" id="heroIndex" style="">+1.04</span>
-<!-- Percentage change removed as per request -->
+<div class="flex flex-col justify-center w-full mb-8 space-y-2 items-start justify-start">
+<h2 class="text-[22px] font-black text-on-surface tracking-tight">实时TACO指数</h2>
+<div class="flex items-center gap-4">
+<span class="font-black text-[48px] text-on-surface tracking-tighter" id="heroIndex">+1.04</span>
+<button class="bg-risk-high text-white px-3 py-1.5 rounded-lg text-[13px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-base">vitals</span>
+      政策回撤风险：高
+    </button>
 </div>
 </div>
-<button class="w-full bg-risk-high text-white py-4 rounded-xl text-[19px] font-bold animate-pulse-risk shadow-lg flex items-center justify-center gap-2 mb-8" style="">
-<span class="material-symbols-outlined text-xl" style="">vitals</span>
-                政策回撤风险：高
-            </button>
-<div class="pt-6 border-t border-outline-variant flex gap-4">
+<div class="pt-6 border-t border-outline-variant flex gap-4 mt-4">
 <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
 <span class="material-symbols-outlined text-primary text-3xl" style="">auto_awesome</span>
 </div>
@@ -813,10 +818,10 @@
                 const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 circle.setAttribute("cx", x);
                 circle.setAttribute("cy", yt);
-                circle.setAttribute("r", "12");
+                circle.setAttribute("r", "14");
                 circle.setAttribute("fill", "#E14D57");
                 circle.setAttribute("stroke", "#fff");
-                circle.setAttribute("stroke-width", "3");
+                circle.setAttribute("stroke-width", "4");
                 circle.setAttribute("class", "chart-dot");
                 circle.onclick = (e) => {
                     e.stopPropagation();
@@ -827,23 +832,27 @@
                     tooltip.style.display = 'block';
                     
                     const wrapperWidth = chartWrapper.offsetWidth;
-                    const wrapperHeight = chartWrapper.offsetHeight;
                     const posX = (x / 800) * wrapperWidth;
-                    const posY = (yt / 450) * wrapperHeight;
+                    const posY = (yt / 450) * chartWrapper.offsetHeight;
 
                     tooltip.style.left = posX + 'px';
                     tooltip.style.top = (posY - 15) + 'px';
                     tooltip.style.transform = 'translate(-50%, -100%)';
 
+                    // Enhanced containment logic
                     const rect = tooltip.getBoundingClientRect();
                     const containerRect = chartWrapper.getBoundingClientRect();
                     
-                    if (rect.left < containerRect.left) {
+                    if (rect.left < containerRect.left + 10) {
                         tooltip.style.transform = 'translate(0, -100%)';
                         tooltip.style.left = '10px';
-                    } else if (rect.right > containerRect.right) {
+                        tooltip.classList.add('no-arrow');
+                    } else if (rect.right > containerRect.right - 10) {
                         tooltip.style.transform = 'translate(-100%, -100%)';
                         tooltip.style.left = (wrapperWidth - 10) + 'px';
+                        tooltip.classList.add('no-arrow');
+                    } else {
+                        tooltip.classList.remove('no-arrow');
                     }
                 };
                 dotGroup.appendChild(circle);
