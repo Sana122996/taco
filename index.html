@@ -4,200 +4,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>特朗普TACO指数 Pro</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries">const FACTORS = [
-        { key: "spxInverse", label: "标普500反向1M", icon: "trending_down", unit: "", multiplier: 1.15, rawZ: 1.53, val: "4.6", contribution: 2.29, desc: "特朗普对股市高度敏感，急跌常促使口风软化。", trigger: "压力区: 3%-6%", source: "FRED SP500", freq: "实时" },
-        { key: "us10y", label: "10Y美债收益率", icon: "account_balance", unit: "bp", multiplier: 1.15, rawZ: 1.2, val: "42", contribution: 1.86, desc: "长端利率是融资条件核心压力阀。", trigger: "观察区: 4.3%-4.5%", source: "FRED DGS10", freq: "日频" },
-        { key: "mortgage30y", label: "30Y按揭利率", icon: "home", unit: "bp", multiplier: 1.0, rawZ: 0.45, val: "18", contribution: 0.38, desc: "居民体感变量，对选民情绪传导直接。", trigger: "线性敏感", source: "FRED MORT30", freq: "周频" },
-        { key: "gasoline", label: "汽油价格变动", icon: "local_gas_station", unit: "%", multiplier: 1.1, rawZ: 1.16, val: "5.8", contribution: 1.40, desc: "能源通胀是民意压力的火山口。", trigger: "升温区: 4%-8%", source: "FRED GASREG", freq: "周频" },
-        { key: "cpiSwap1y", label: "1Y通胀预期", icon: "speed", unit: "bp", multiplier: 1.15, rawZ: 0.51, val: "28", contribution: 0.70, desc: "限制关税与地缘政策的客观空间。", trigger: "抬升区: 20-40bp", source: "Market Swap", freq: "日频" },
-        { key: "approval", label: "总统支持率变动", icon: "group", unit: "%", multiplier: 1.0, rawZ: 0.3, val: "-1.2", contribution: 0.24, desc: "支持率走弱导致政策回撤阈值降低。", trigger: "末端反馈", source: "NYT Average", freq: "周频" }
-    ];
-
-    const ALL_HISTORY = [
-        {date: "11-01", taco: 0.1, vix: 14}, {date: "12-01", taco: 0.3, vix: 16}, 
-        {date: "01-01", taco: 0.15, vix: 15, event: "01-05: 政策发布"},
-        {date: "01-15", taco: 0.4, vix: 18}, {date: "02-01", taco: 0.5, vix: 17, event: "02-10: 袭击伊朗"},
-        {date: "03-01", taco: 0.45, vix: 19}, {date: "03-15", taco: 0.8, vix: 22, event: "03-20: 关税暂停"},
-        {date: "04-01", taco: 1.04, vix: 21, event: "04-02: 90天窗口"}
-    ];
-
-    const NEWS = [
-        { time: "10:28", tag: "政策口风", title: "特朗普称将重新评估部分施压节奏", body: "市场压力抬升时，这类表态常预示政策边际软化。", tone: "偏强硬", toneCls: "bg-financial-up/10 text-financial-up" },
-        { time: "09:41", tag: "通胀表态", title: "白宫强调能源价格不可失控", body: "能源支出仍是核心民生红线，汽油因子重要性提升。", tone: "观察中", toneCls: "bg-on-surface/5 text-on-surface/60" },
-        { time: "昨日", tag: "团队动态", title: "贸易顾问与财政部就关税细则博弈", body: "内部分歧说明政策落实进入高压修正期。", tone: "观察中", toneCls: "bg-on-surface/5 text-on-surface/60" }
-    ];
-
-    let showAllNews = false;
-
-    function toggleModal() {
-        document.getElementById('defModal').classList.toggle('hidden');
-    }
-
-    function toggleNews() {
-        showAllNews = !showAllNews;
-        document.getElementById('showMoreBtn').innerText = showAllNews ? '收起历史动态' : '查看更多历史动态';
-        renderNews();
-    }
-
-    function renderFactors() {
-        const grid = document.getElementById('factorsGrid');
-        grid.innerHTML = FACTORS.map(f => `
-            <div class="bg-surface-variant p-6 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-primary text-2xl">${f.icon}</span>
-<h4 class="text-[19px] text-on-surface font-black uppercase tracking-tight">${f.label}</h4>
-</div>
-<div class="grid grid-cols-4 gap-2 bg-surface p-4 rounded-2xl">
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">当前</p>
-<p class="text-[16px] font-black">${f.val}${f.unit}</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">Raw Z</p>
-<p class="text-[16px] font-black text-financial-up">+${f.rawZ.toFixed(2)}</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">权重</p>
-<p class="text-[16px] font-black">x${f.multiplier.toFixed(2)}</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">贡献值</p>
-<p class="text-[16px] font-black text-financial-up">+${f.contribution.toFixed(2)}</p>
-</div>
-</div>
-<div class="space-y-4">
-<div class="bg-secondary/10 px-3 py-1.5 rounded-lg text-[13px] font-black text-secondary inline-block">
-                        ${f.trigger}
-                    </div>
-<p class="text-[17px] text-on-surface/70 leading-relaxed">${f.desc}</p>
-</div>
-<div class="flex gap-5 text-[11px] font-black text-on-surface/30 uppercase pt-2">
-<span>源: ${f.source}</span>
-<span>频: ${f.freq}</span>
-</div>
-</div>
-        `).join('');
-    }
-
-    function renderNews() {
-        const list = showAllNews ? NEWS : NEWS.slice(0, 2);
-        document.getElementById('newsList').innerHTML = list.map(n => `
-            <div class="relative timeline-item pl-4">
-<div class="flex justify-between items-center mb-3">
-<span class="text-sm text-on-surface/40 font-black">${n.time} · ${n.tag}</span>
-<span class="text-[12px] px-3 py-1 rounded font-black ${n.toneCls}">${n.tone}</span>
-</div>
-<h4 class="text-[20px] font-black text-on-surface leading-snug">${n.title}</h4>
-<p class="text-[17px] text-on-surface/70 leading-relaxed mt-3">${n.body}</p>
-</div>
-        `).join('');
-    }
-
-    function initChart(rangeVal = 100) {
-        const tacoPath = document.getElementById('tacoPath');
-        const vixPath = document.getElementById('vixPath');
-        const dotGroup = document.getElementById('eventDots');
-        const labelGroup = document.getElementById('xAxisLabels');
-        const tooltip = document.getElementById('tooltip');
-        const chartWrapper = document.getElementById('chartWrapper');
-
-        const width = 680; 
-        const height = 300; 
-        const marginX = 60;
-        const marginY = 50;
-
-        const visibleCount = Math.max(2, Math.floor((rangeVal / 100) * ALL_HISTORY.length));
-        const historySlice = ALL_HISTORY.slice(0, visibleCount);
-
-        document.getElementById('rangeStart').innerText = historySlice[0].date === "11-01" ? "2024-11-01" : historySlice[0].date;
-        document.getElementById('rangeEnd').innerText = historySlice[historySlice.length-1].date === "04-01" ? "2025-04-15" : historySlice[historySlice.length-1].date;
-
-        dotGroup.innerHTML = '';
-        labelGroup.innerHTML = '';
-
-        function getX(idx) { return marginX + (idx * (width / (historySlice.length - 1))); }
-        function getY_Taco(val) { return marginY + (height - ((val + 1) / 3) * height); }
-        function getY_Vix(val) { return marginY + (height - ((val - 15) / 25) * height); }
-
-        let tD = '', vD = '';
-        historySlice.forEach((d, i) => {
-            const x = getX(i);
-            const yt = getY_Taco(d.taco);
-            const yv = getY_Vix(d.vix);
-            tD += (i === 0 ? 'M' : 'L') + x + ',' + yt;
-            vD += (i === 0 ? 'M' : 'L') + x + ',' + yv;
-
-            if (historySlice.length <= 4 || i % Math.floor(historySlice.length/3) === 0 || i === historySlice.length -1) {
-                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                label.setAttribute("x", x);
-                label.setAttribute("y", "420");
-                label.setAttribute("text-anchor", "middle");
-                label.textContent = d.date;
-                labelGroup.appendChild(label);
-            }
-
-            if (d.event) {
-                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                circle.setAttribute("cx", x);
-                circle.setAttribute("cy", yt);
-                circle.setAttribute("r", "14");
-                circle.setAttribute("fill", "#E14D57");
-                circle.setAttribute("stroke", "#fff");
-                circle.setAttribute("stroke-width", "4");
-                circle.setAttribute("class", "chart-dot");
-                circle.onclick = (e) => {
-                    e.stopPropagation();
-                    document.querySelectorAll('.chart-dot').forEach(c => c.classList.remove('active'));
-                    circle.classList.add('active');
-                    
-                    tooltip.innerHTML = d.event;
-                    tooltip.style.display = 'block';
-                    
-                    const wrapperWidth = chartWrapper.offsetWidth;
-                    const posX = (x / 800) * wrapperWidth;
-                    const posY = (yt / 450) * chartWrapper.offsetHeight;
-
-                    tooltip.style.left = posX + 'px';
-                    tooltip.style.top = (posY - 15) + 'px';
-                    tooltip.style.transform = 'translate(-50%, -100%)';
-
-                    // Enhanced containment logic
-                    const rect = tooltip.getBoundingClientRect();
-                    const containerRect = chartWrapper.getBoundingClientRect();
-                    
-                    if (rect.left < containerRect.left + 10) {
-                        tooltip.style.transform = 'translate(0, -100%)';
-                        tooltip.style.left = '10px';
-                        tooltip.classList.add('no-arrow');
-                    } else if (rect.right > containerRect.right - 10) {
-                        tooltip.style.transform = 'translate(-100%, -100%)';
-                        tooltip.style.left = (wrapperWidth - 10) + 'px';
-                        tooltip.classList.add('no-arrow');
-                    } else {
-                        tooltip.classList.remove('no-arrow');
-                    }
-                };
-                dotGroup.appendChild(circle);
-            }
-        });
-
-        tacoPath.setAttribute('d', tD);
-        vixPath.setAttribute('d', vD);
-    }
-
-    document.getElementById('chartRange').oninput = function(e) {
-        initChart(this.value);
-    };
-
-    document.onclick = () => {
-        const tooltip = document.getElementById('tooltip');
-        if(tooltip) tooltip.style.display = 'none';
-        document.querySelectorAll('.chart-dot').forEach(c => c.classList.remove('active'));
-    };
-
-    renderFactors();
-    renderNews();
-    initChart(100);</script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
       tailwind.config = {
@@ -267,7 +74,6 @@
             white-space: nowrap;
             max-width: 90%;
         }
-        /* Arrow styling for tooltip */
         .chart-tooltip::after {
             content: '';
             position: absolute;
@@ -323,7 +129,6 @@
             box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-    
         .chart-tooltip.no-arrow::after { display: none; }
     </style>
 </head>
@@ -332,16 +137,15 @@
 <header class="pt-10 pb-4 px-6 relative overflow-hidden">
 <div class="flex justify-between items-start">
 <div class="flex flex-col items-start pt-6 z-10">
-<!-- Scaled Logo: Previous h-3 scaled by 1.5x to h-[1.125rem] or roughly h-4.5 -->
-<img alt="Logo" class="w-auto mb-4 object-contain h-[1.125rem] opacity-90" src="https://lh3.googleusercontent.com/aida/ADBb0uhqfmMRLoc7c7q5j2qTqVPdcDxqkCXgA7TEBdO2xS5gSbGfCe4VWufCI0XVHqkDZ7S9OMzVtn1KdTxB0pCRDkubQmtT2VJ3w2hRoWZYUIbEIX0Q90-S2bqnO9j08dR9wlaRQPsL2CKAU4zVv9xr52TDq8uSpS9CG16s8_KW-C8dlFzINKS2L_v1oGRcchYN0fuaN4t5UKvH6dIVA5M_qc3P3flZhFvP7xPCAZCE8c2I194ftb0vNWw4YGkhJKngxlVmtN7kspn2" style=""/>
+<img alt="Logo" class="w-auto mb-4 object-contain h-[1.125rem] opacity-90" src="https://lh3.googleusercontent.com/aida/ADBb0uhqfmMRLoc7c7q5j2qTqVPdcDxqkCXgA7TEBdO2xS5gSbGfCe4VWufCI0XVHqkDZ7S9OMzVtn1KdTxB0pCRDkubQmtT2VJ3w2hRoWZYUIbEIX0Q90-S2bqnO9j08dR9wlaRQPsL2CKAU4zVv9xr52TDq8uSpS9CG16s8_KW-C8dlFzINKS2L_v1oGRcchYN0fuaN4t5UKvH6dIVA5M_qc3P3flZhFvP7xPCAZCE8c2I194ftb0vNWw4YGkhJKngxlVmtN7kspn2"/>
 <div class="flex items-center gap-2">
-<!-- Heading preserved at 80% size -->
-<h1 class="serif-heavy text-[35.2px] text-on-surface tracking-tighter leading-none" style="">特朗普TACO指数</h1>
-<button class="material-symbols-outlined text-on-surface/30 text-2xl mt-1" onclick="toggleModal()" style="">help</button>
+<h1 class="serif-heavy text-[35.2px] text-on-surface tracking-tighter leading-none">特朗普TACO指数</h1>
+<button class="material-symbols-outlined text-on-surface/30 text-2xl mt-1" onclick="toggleModal()">help</button>
 </div>
 </div>
-<div class="absolute -right-4 -top-2 flex-shrink-0 z-0 w-40 h-40">
-<img alt="Trump TACO" class="w-full h-full object-contain opacity-40" src="https://lh3.googleusercontent.com/aida/ADBb0ugWSZdg2rPzEAOsdbITwaiuPM1oBOtGajYXjBhFCyCIsNJcpYw6VWwHzy54QWOSl6W74KTve7pUd4fpBBsJUHSPYfzhxEMXZJMJsSQrcLnQeKtbHqtUdvTkSKZevFRdFV_QeYjDdngXgpnfsLNc4M4a8fiuQxz2bWpZoLWM3XJK-Q6bEvIluAVonz2GqYhtKFsEkKxBwbs0j1TnAIg889j6VUg7j7GeoyVJg6fw-xgXbTX0rtmb7XNj3O1dq8SAjo0Xr2N1K6Loqw" style=""/>
+<!-- Header Illustration: Adjusted size and opacity based on feedback -->
+<div class="absolute -right-4 -top-4 flex-shrink-0 z-0 w-[6.4rem] h-auto">
+<img alt="Trump TACO" class="w-full h-full object-contain opacity-75" src="https://lh3.googleusercontent.com/aida/ADBb0ujLWKjiGjZPlWosPUrNPWuIwULwx8H9SNbUYWQ80f1mMUCdR_GfEoJl7jL17FYjG_XevBQolaQfkFoycEZOV_0e3koN_XLVMj-n2USzHedqo4JyQajiIBymJHjftpCb_LOISKdaVmniavge6JMl2iueioOYR3l1yPrhZ9AyumB3vi7kTL_9pnpMtqAza9bqdlyKg-BO2di46M9CbCGmZ69ZtHN9-aom_Fyt70MzI586dGOxscrrGOrVg9eSFVHDo8seT9WTENXb6Q"/>
 </div>
 </div>
 </header>
@@ -361,11 +165,11 @@
 </div>
 <div class="pt-6 border-t border-outline-variant flex gap-4 mt-4">
 <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-<span class="material-symbols-outlined text-primary text-3xl" style="">auto_awesome</span>
+<span class="material-symbols-outlined text-primary text-3xl">auto_awesome</span>
 </div>
 <div class="space-y-1">
-<span class="text-xs font-black text-primary uppercase tracking-widest block" style="">今日深度解读</span>
-<p class="text-[17px] leading-relaxed text-on-surface/80" id="miniSummary" style="">
+<span class="text-xs font-black text-primary uppercase tracking-widest block">今日深度解读</span>
+<p class="text-[17px] leading-relaxed text-on-surface/80" id="miniSummary">
                         当前指数为 +1.04，主导压力来自反向SPX、10Y美债。由于处于高风险区，市场极易交易口风变化，建议密切警惕资产波动。
                     </p>
 </div>
@@ -375,8 +179,8 @@
 <!-- Interactive History Chart -->
 <section class="space-y-4">
 <div class="flex justify-between items-end">
-<h3 class="font-black text-[26px] text-on-surface tracking-tight" style="">历史走势与关键事件</h3>
-<span class="text-sm text-on-surface/40 font-bold" style="">TACO vs VIX指数</span>
+<h3 class="font-black text-[26px] text-on-surface tracking-tight">历史走势与关键事件</h3>
+<span class="text-sm text-on-surface/40 font-bold">TACO vs VIX指数</span>
 </div>
 <div class="bg-surface-variant p-6 rounded-3xl shadow-sm border border-outline-variant relative overflow-hidden" id="chartContainer">
 <div class="chart-tooltip" id="tooltip" style="display: none;"></div>
@@ -402,272 +206,49 @@
 </g>
 <path d="M60,240L157.14285714285714,220L254.28571428571428,235L351.42857142857144,210.00000000000003L448.57142857142856,200L545.7142857142857,205L642.8571428571429,170L740,145.99999999999997" fill="none" id="tacoPath" stroke="#1A1C1E" stroke-linecap="round" stroke-width="6"></path>
 <path d="M60,362L157.14285714285714,338L254.28571428571428,350L351.42857142857144,314L448.57142857142856,326L545.7142857142857,302L642.8571428571429,266L740,278" fill="none" id="vixPath" opacity="0.4" stroke="#5C8DFF" stroke-dasharray="10,6" stroke-width="4"></path>
-<!-- Large Dots: Increased r to 12 for better touch targets -->
-<g id="eventDots"><circle class="chart-dot" cx="254.28571428571428" cy="235" fill="#E14D57" r="12" stroke="#fff" stroke-width="3"></circle><circle class="chart-dot" cx="448.57142857142856" cy="200" fill="#E14D57" r="12" stroke="#fff" stroke-width="3"></circle><circle class="chart-dot" cx="642.8571428571429" cy="170" fill="#E14D57" r="12" stroke="#fff" stroke-width="3"></circle><circle class="chart-dot" cx="740" cy="145.99999999999997" fill="#E14D57" r="12" stroke="#fff" stroke-width="3"></circle></g>
-<g class="text-[16px] fill-on-surface/40 font-bold" id="xAxisLabels"><text text-anchor="middle" x="60" y="420">11-01</text><text text-anchor="middle" x="254.28571428571428" y="420">01-01</text><text text-anchor="middle" x="448.57142857142856" y="420">02-01</text><text text-anchor="middle" x="642.8571428571429" y="420">03-15</text><text text-anchor="middle" x="740" y="420">04-01</text></g>
+<g id="eventDots"></g>
+<g class="text-[16px] fill-on-surface/40 font-bold" id="xAxisLabels"></g>
 </svg>
 </div>
 <div class="mt-10 px-2 space-y-3">
 <div class="flex justify-between text-[13px] font-bold text-on-surface/30 uppercase tracking-widest">
-<span class="" id="rangeStart" style="">2024-11-01</span>
-<span class="text-primary/60" style="">滑动查看历史跨度</span>
-<span class="" id="rangeEnd" style="">2025-04-15</span>
+<span id="rangeStart">2024-11-01</span>
+<span class="text-primary/60">滑动查看历史跨度</span>
+<span id="rangeEnd">2025-04-15</span>
 </div>
 <input class="w-full" id="chartRange" max="100" min="0" type="range" value="100"/>
 </div>
 <div class="flex flex-wrap gap-6 mt-6 pt-6 border-t border-outline-variant/60">
 <div class="flex items-center gap-2">
 <div class="w-5 h-2 bg-on-surface rounded-full"></div>
-<span class="text-sm font-black text-on-surface" style="">TACO指数</span>
+<span class="text-sm font-black text-on-surface">TACO指数</span>
 </div>
 <div class="flex items-center gap-2">
 <div class="w-5 h-2 bg-primary/40 border-t-2 border-dashed border-primary rounded-full"></div>
-<span class="text-sm font-black text-on-surface" style="">VIX波动</span>
+<span class="text-sm font-black text-on-surface">VIX波动</span>
 </div>
 <div class="ml-auto flex items-center gap-1">
-<span class="material-symbols-outlined text-primary text-lg" style="">ads_click</span>
-<span class="text-xs text-primary font-bold italic" style="">点击圆点查看事件</span>
+<span class="material-symbols-outlined text-primary text-lg">ads_click</span>
+<span class="text-xs text-primary font-bold italic">点击圆点查看事件</span>
 </div>
 </div>
 </div>
 </section>
 <!-- Factor Breakdown -->
 <section class="space-y-6">
-<h3 class="font-black text-[26px] text-on-surface tracking-tight" style="">因子深度拆解</h3>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="factorsGrid">
-<div class="bg-surface-variant p-6 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-primary text-2xl" style="">trending_down</span>
-<h4 class="text-[19px] text-on-surface font-black uppercase tracking-tight" style="">标普500反向1M</h4>
-</div>
-<div class="grid grid-cols-4 gap-2 bg-surface p-4 rounded-2xl">
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">当前</p>
-<p class="text-[16px] font-black" style="">4.6</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">Raw Z</p>
-<p class="text-[16px] font-black text-financial-up" style="">+1.53</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">权重</p>
-<p class="text-[16px] font-black" style="">x1.15</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">贡献值</p>
-<p class="text-[16px] font-black text-financial-up" style="">+2.29</p>
-</div>
-</div>
-<div class="space-y-4">
-<div class="bg-secondary/10 px-3 py-1.5 rounded-lg text-[13px] font-black text-secondary inline-block" style="">
-                        压力区: 3%-6%
-                    </div>
-<p class="text-[17px] text-on-surface/70 leading-relaxed" style="">特朗普对股市高度敏感，急跌常促使口风软化。</p>
-</div>
-<div class="flex gap-5 text-[11px] font-black text-on-surface/30 uppercase pt-2">
-<span class="" style="">源: FRED SP500</span>
-<span class="" style="">频: 实时</span>
-</div>
-</div>
-<div class="bg-surface-variant p-6 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-primary text-2xl" style="">account_balance</span>
-<h4 class="text-[19px] text-on-surface font-black uppercase tracking-tight" style="">10Y美债收益率</h4>
-</div>
-<div class="grid grid-cols-4 gap-2 bg-surface p-4 rounded-2xl">
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">当前</p>
-<p class="text-[16px] font-black" style="">42bp</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">Raw Z</p>
-<p class="text-[16px] font-black text-financial-up" style="">+1.20</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">权重</p>
-<p class="text-[16px] font-black" style="">x1.15</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">贡献值</p>
-<p class="text-[16px] font-black text-financial-up" style="">+1.86</p>
-</div>
-</div>
-<div class="space-y-4">
-<div class="bg-secondary/10 px-3 py-1.5 rounded-lg text-[13px] font-black text-secondary inline-block" style="">
-                        观察区: 4.3%-4.5%
-                    </div>
-<p class="text-[17px] text-on-surface/70 leading-relaxed" style="">长端利率是融资条件核心压力阀。</p>
-</div>
-<div class="flex gap-5 text-[11px] font-black text-on-surface/30 uppercase pt-2">
-<span class="" style="">源: FRED DGS10</span>
-<span class="" style="">频: 日频</span>
-</div>
-</div>
-<div class="bg-surface-variant p-6 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-primary text-2xl" style="">home</span>
-<h4 class="text-[19px] text-on-surface font-black uppercase tracking-tight" style="">30Y按揭利率</h4>
-</div>
-<div class="grid grid-cols-4 gap-2 bg-surface p-4 rounded-2xl">
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">当前</p>
-<p class="text-[16px] font-black" style="">18bp</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">Raw Z</p>
-<p class="text-[16px] font-black text-financial-up" style="">+0.45</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">权重</p>
-<p class="text-[16px] font-black" style="">x1.00</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">贡献值</p>
-<p class="text-[16px] font-black text-financial-up" style="">+0.38</p>
-</div>
-</div>
-<div class="space-y-4">
-<div class="bg-secondary/10 px-3 py-1.5 rounded-lg text-[13px] font-black text-secondary inline-block" style="">
-                        线性敏感
-                    </div>
-<p class="text-[17px] text-on-surface/70 leading-relaxed" style="">居民体感变量，对选民情绪传导直接。</p>
-</div>
-<div class="flex gap-5 text-[11px] font-black text-on-surface/30 uppercase pt-2">
-<span class="" style="">源: FRED MORT30</span>
-<span class="" style="">频: 周频</span>
-</div>
-</div>
-<div class="bg-surface-variant p-6 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-primary text-2xl" style="">local_gas_station</span>
-<h4 class="text-[19px] text-on-surface font-black uppercase tracking-tight" style="">汽油价格变动</h4>
-</div>
-<div class="grid grid-cols-4 gap-2 bg-surface p-4 rounded-2xl">
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">当前</p>
-<p class="text-[16px] font-black" style="">5.8%</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">Raw Z</p>
-<p class="text-[16px] font-black text-financial-up" style="">+1.16</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">权重</p>
-<p class="text-[16px] font-black" style="">x1.10</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">贡献值</p>
-<p class="text-[16px] font-black text-financial-up" style="">+1.40</p>
-</div>
-</div>
-<div class="space-y-4">
-<div class="bg-secondary/10 px-3 py-1.5 rounded-lg text-[13px] font-black text-secondary inline-block" style="">
-                        升温区: 4%-8%
-                    </div>
-<p class="text-[17px] text-on-surface/70 leading-relaxed" style="">能源通胀是民意压力的火山口。</p>
-</div>
-<div class="flex gap-5 text-[11px] font-black text-on-surface/30 uppercase pt-2">
-<span class="" style="">源: FRED GASREG</span>
-<span class="" style="">频: 周频</span>
-</div>
-</div>
-<div class="bg-surface-variant p-6 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-primary text-2xl" style="">speed</span>
-<h4 class="text-[19px] text-on-surface font-black uppercase tracking-tight" style="">1Y通胀预期</h4>
-</div>
-<div class="grid grid-cols-4 gap-2 bg-surface p-4 rounded-2xl">
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">当前</p>
-<p class="text-[16px] font-black" style="">28bp</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">Raw Z</p>
-<p class="text-[16px] font-black text-financial-up" style="">+0.51</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">权重</p>
-<p class="text-[16px] font-black" style="">x1.15</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">贡献值</p>
-<p class="text-[16px] font-black text-financial-up" style="">+0.70</p>
-</div>
-</div>
-<div class="space-y-4">
-<div class="bg-secondary/10 px-3 py-1.5 rounded-lg text-[13px] font-black text-secondary inline-block" style="">
-                        抬升区: 20-40bp
-                    </div>
-<p class="text-[17px] text-on-surface/70 leading-relaxed" style="">限制关税与地缘政策的客观空间。</p>
-</div>
-<div class="flex gap-5 text-[11px] font-black text-on-surface/30 uppercase pt-2">
-<span class="" style="">源: Market Swap</span>
-<span class="" style="">频: 日频</span>
-</div>
-</div>
-<div class="bg-surface-variant p-6 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-primary text-2xl" style="">group</span>
-<h4 class="text-[19px] text-on-surface font-black uppercase tracking-tight" style="">总统支持率变动</h4>
-</div>
-<div class="grid grid-cols-4 gap-2 bg-surface p-4 rounded-2xl">
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">当前</p>
-<p class="text-[16px] font-black" style="">-1.2%</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">Raw Z</p>
-<p class="text-[16px] font-black text-financial-up" style="">+0.30</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">权重</p>
-<p class="text-[16px] font-black" style="">x1.00</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1" style="">贡献值</p>
-<p class="text-[16px] font-black text-financial-up" style="">+0.24</p>
-</div>
-</div>
-<div class="space-y-4">
-<div class="bg-secondary/10 px-3 py-1.5 rounded-lg text-[13px] font-black text-secondary inline-block" style="">
-                        末端反馈
-                    </div>
-<p class="text-[17px] text-on-surface/70 leading-relaxed" style="">支持率走弱导致政策回撤阈值降低。</p>
-</div>
-<div class="flex gap-5 text-[11px] font-black text-on-surface/30 uppercase pt-2">
-<span class="" style="">源: NYT Average</span>
-<span class="" style="">频: 周频</span>
-</div>
-</div>
-</div>
+<h3 class="font-black text-[26px] text-on-surface tracking-tight">因子深度拆解</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="factorsGrid"></div>
 </section>
 <!-- News Feed -->
 <section class="space-y-4">
 <div class="flex justify-between items-center">
-<h3 class="font-black text-[26px] text-on-surface tracking-tight" style="">实时政策脉搏</h3>
-<span class="material-symbols-outlined text-primary text-3xl" style="">rss_feed</span>
+<h3 class="font-black text-[26px] text-on-surface tracking-tight">实时政策脉搏</h3>
+<span class="material-symbols-outlined text-primary text-3xl">rss_feed</span>
 </div>
 <div class="relative pl-6 timeline-container">
-<div class="space-y-10" id="newsList">
-<div class="relative timeline-item pl-4">
-<div class="flex justify-between items-center mb-3">
-<span class="text-sm text-on-surface/40 font-black" style="">10:28 · 政策口风</span>
-<span class="text-[12px] px-3 py-1 rounded font-black bg-financial-up/10 text-financial-up" style="">偏强硬</span>
+<div class="space-y-10" id="newsList"></div>
 </div>
-<h4 class="text-[20px] font-black text-on-surface leading-snug" style="">特朗普称将重新评估部分施压节奏</h4>
-<p class="text-[17px] text-on-surface/70 leading-relaxed mt-3" style="">市场压力抬升时，这类表态常预示政策边际软化。</p>
-</div>
-<div class="relative timeline-item pl-4">
-<div class="flex justify-between items-center mb-3">
-<span class="text-sm text-on-surface/40 font-black" style="">09:41 · 通胀表态</span>
-<span class="text-[12px] px-3 py-1 rounded font-black bg-on-surface/5 text-on-surface/60" style="">观察中</span>
-</div>
-<h4 class="text-[20px] font-black text-on-surface leading-snug" style="">白宫强调能源价格不可失控</h4>
-<p class="text-[17px] text-on-surface/70 leading-relaxed mt-3" style="">能源支出仍是核心民生红线，汽油因子重要性提升。</p>
-</div>
-</div>
-</div>
-<button class="w-full py-5 text-[17px] font-bold text-primary border-2 border-primary/10 rounded-2xl bg-primary/5 active:bg-primary/10 transition-colors mt-6" id="showMoreBtn" onclick="toggleNews()" style="">
+<button class="w-full py-5 text-[17px] font-bold text-primary border-2 border-primary/10 rounded-2xl bg-primary/5 active:bg-primary/10 transition-colors mt-6" id="showMoreBtn" onclick="toggleNews()">
             查看更多历史动态
         </button>
 </section>
@@ -675,14 +256,15 @@
 <!-- Definition Modal -->
 <div class="fixed inset-0 z-[100] items-center justify-center p-6 bg-black/60 backdrop-blur-sm hidden flex" id="defModal" onclick="toggleModal()">
 <div class="bg-white p-8 rounded-[32px] shadow-2xl max-w-sm space-y-6 border border-outline-variant" onclick="event.stopPropagation()">
-<h4 class="font-black text-3xl text-on-surface serif-heavy" style="">什么是 TACO 指数？</h4>
-<p class="text-lg leading-relaxed text-on-surface/70" style="">
+<h4 class="font-black text-3xl text-on-surface serif-heavy">什么是 TACO 指数？</h4>
+<p class="text-lg leading-relaxed text-on-surface/70">
             "TACO" (Trump Always Chickens Out) 最初用于观察政策在市场压力下的“急转弯”。金十数据通过标普500、美债收益率、通胀预期等6大维度，量化总统面临的政策压力。指数越高，政策发生“退缩”或“修正”的可能性越大。
         </p>
-<button class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-xl shadow-lg" onclick="toggleModal()" style="">了解并返回</button>
+<button class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-xl shadow-lg" onclick="toggleModal()">了解并返回</button>
 </div>
 </div>
-<script>const FACTORS = [
+<script>
+    const FACTORS = [
         { key: "spxInverse", label: "标普500反向1M", icon: "trending_down", unit: "", multiplier: 1.15, rawZ: 1.53, val: "4.6", contribution: 2.29, desc: "特朗普对股市高度敏感，急跌常促使口风软化。", trigger: "压力区: 3%-6%", source: "FRED SP500", freq: "实时" },
         { key: "us10y", label: "10Y美债收益率", icon: "account_balance", unit: "bp", multiplier: 1.15, rawZ: 1.2, val: "42", contribution: 1.86, desc: "长端利率是融资条件核心压力阀。", trigger: "观察区: 4.3%-4.5%", source: "FRED DGS10", freq: "日频" },
         { key: "mortgage30y", label: "30Y按揭利率", icon: "home", unit: "bp", multiplier: 1.0, rawZ: 0.45, val: "18", contribution: 0.38, desc: "居民体感变量，对选民情绪传导直接。", trigger: "线性敏感", source: "FRED MORT30", freq: "周频" },
@@ -721,39 +303,39 @@
         const grid = document.getElementById('factorsGrid');
         grid.innerHTML = FACTORS.map(f => `
             <div class="bg-surface-variant p-6 rounded-3xl border border-outline-variant flex flex-col gap-6 shadow-sm">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-primary text-2xl">${f.icon}</span>
-<h4 class="text-[19px] text-on-surface font-black uppercase tracking-tight">${f.label}</h4>
-</div>
-<div class="grid grid-cols-4 gap-2 bg-surface p-4 rounded-2xl">
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">当前</p>
-<p class="text-[16px] font-black">${f.val}${f.unit}</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">Raw Z</p>
-<p class="text-[16px] font-black text-financial-up">+${f.rawZ.toFixed(2)}</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">权重</p>
-<p class="text-[16px] font-black">x${f.multiplier.toFixed(2)}</p>
-</div>
-<div class="flex flex-col">
-<p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">贡献值</p>
-<p class="text-[16px] font-black text-financial-up">+${f.contribution.toFixed(2)}</p>
-</div>
-</div>
-<div class="space-y-4">
-<div class="bg-secondary/10 px-3 py-1.5 rounded-lg text-[13px] font-black text-secondary inline-block">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary text-2xl">${f.icon}</span>
+                    <h4 class="text-[19px] text-on-surface font-black uppercase tracking-tight">${f.label}</h4>
+                </div>
+                <div class="grid grid-cols-4 gap-2 bg-surface p-4 rounded-2xl">
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">当前</p>
+                        <p class="text-[16px] font-black">${f.val}${f.unit}</p>
+                    </div>
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">Raw Z</p>
+                        <p class="text-[16px] font-black text-financial-up">+${f.rawZ.toFixed(2)}</p>
+                    </div>
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">权重</p>
+                        <p class="text-[16px] font-black">x${f.multiplier.toFixed(2)}</p>
+                    </div>
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-on-surface/30 font-black uppercase mb-1">贡献值</p>
+                        <p class="text-[16px] font-black text-financial-up">+${f.contribution.toFixed(2)}</p>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="bg-secondary/10 px-3 py-1.5 rounded-lg text-[13px] font-black text-secondary inline-block">
                         ${f.trigger}
                     </div>
-<p class="text-[17px] text-on-surface/70 leading-relaxed">${f.desc}</p>
-</div>
-<div class="flex gap-5 text-[11px] font-black text-on-surface/30 uppercase pt-2">
-<span>源: ${f.source}</span>
-<span>频: ${f.freq}</span>
-</div>
-</div>
+                    <p class="text-[17px] text-on-surface/70 leading-relaxed">${f.desc}</p>
+                </div>
+                <div class="flex gap-5 text-[11px] font-black text-on-surface/30 uppercase pt-2">
+                    <span>源: ${f.source}</span>
+                    <span>频: ${f.freq}</span>
+                </div>
+            </div>
         `).join('');
     }
 
@@ -761,13 +343,13 @@
         const list = showAllNews ? NEWS : NEWS.slice(0, 2);
         document.getElementById('newsList').innerHTML = list.map(n => `
             <div class="relative timeline-item pl-4">
-<div class="flex justify-between items-center mb-3">
-<span class="text-sm text-on-surface/40 font-black">${n.time} · ${n.tag}</span>
-<span class="text-[12px] px-3 py-1 rounded font-black ${n.toneCls}">${n.tone}</span>
-</div>
-<h4 class="text-[20px] font-black text-on-surface leading-snug">${n.title}</h4>
-<p class="text-[17px] text-on-surface/70 leading-relaxed mt-3">${n.body}</p>
-</div>
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-sm text-on-surface/40 font-black">${n.time} · ${n.tag}</span>
+                    <span class="text-[12px] px-3 py-1 rounded font-black ${n.toneCls}">${n.tone}</span>
+                </div>
+                <h4 class="text-[20px] font-black text-on-surface leading-snug">${n.title}</h4>
+                <p class="text-[17px] text-on-surface/70 leading-relaxed mt-3">${n.body}</p>
+            </div>
         `).join('');
     }
 
@@ -818,10 +400,10 @@
                 const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 circle.setAttribute("cx", x);
                 circle.setAttribute("cy", yt);
-                circle.setAttribute("r", "14");
+                circle.setAttribute("r", "12");
                 circle.setAttribute("fill", "#E14D57");
                 circle.setAttribute("stroke", "#fff");
-                circle.setAttribute("stroke-width", "4");
+                circle.setAttribute("stroke-width", "3");
                 circle.setAttribute("class", "chart-dot");
                 circle.onclick = (e) => {
                     e.stopPropagation();
@@ -839,7 +421,6 @@
                     tooltip.style.top = (posY - 15) + 'px';
                     tooltip.style.transform = 'translate(-50%, -100%)';
 
-                    // Enhanced containment logic
                     const rect = tooltip.getBoundingClientRect();
                     const containerRect = chartWrapper.getBoundingClientRect();
                     
@@ -875,5 +456,6 @@
 
     renderFactors();
     renderNews();
-    initChart(100);</script>
+    initChart(100);
+</script>
 </body></html>
